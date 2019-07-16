@@ -344,6 +344,11 @@ class MovieWriter(AbstractMovieWriter):
             dpi = self.fig.dpi
         self.dpi = dpi
         self._w, self._h = self._adjust_frame_size()
+        
+        _log.info('MovieWriter.setup: Using tempfile as PIPE (babrodtk bugfix)')
+        import tempfile
+        self.stdout = tempfile.TemporaryFile()
+        self.stderr = tempfile.TemporaryFile()
 
         # Run here so that grab_frame() can write the data to a pipe. This
         # eliminates the need for temp files.
@@ -357,8 +362,11 @@ class MovieWriter(AbstractMovieWriter):
         _log.info('MovieWriter._run: running command: %s',
                   cbook._pformat_subprocess(command))
         PIPE = subprocess.PIPE
+        #self._proc = subprocess.Popen(
+        #    command, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+        #    creationflags=subprocess_creation_flags)
         self._proc = subprocess.Popen(
-            command, stdin=PIPE, stdout=PIPE, stderr=PIPE,
+            command, stdin=PIPE, stdout=self.stdout, stderr=self.stderr,
             creationflags=subprocess_creation_flags)
 
     def finish(self):
